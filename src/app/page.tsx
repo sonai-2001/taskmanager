@@ -14,6 +14,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
 import supabase from "../supabase/supaClient";
+import { useAppDispatch } from "@/hooks/redux/page";
+import { addUser } from "@/redux-toolkit/slice/userSlice";
 
 interface FormInputs {
   email: string;
@@ -25,6 +27,7 @@ const Landing: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [isAdmin, setIsAdmin] = useState(false); // Toggle between admin and user login
   const router = useRouter();
+  const dispatch=useAppDispatch()
 
   // Handle login
   const handleLogin: SubmitHandler<FormInputs> = async ({ email, password }: FormInputs) => {
@@ -48,7 +51,7 @@ const Landing: React.FC = () => {
         if (userError) throw userError;
 
         // Store user data in sessionStorage
-        sessionStorage.setItem("user", JSON.stringify(userData));
+        // sessionStorage.setItem("user", JSON.stringify(userData));
 
         // Compare the role from the toggle with the database
         if (userData.role !== role) {
@@ -61,6 +64,9 @@ const Landing: React.FC = () => {
           if (userData.role === "admin") {
             router.push("/admin");
           } else {
+            console.log("the userdata is",userData)
+
+             dispatch(addUser(userData))
             router.push("/user");
           }
         }
