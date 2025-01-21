@@ -1,95 +1,162 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import React, { useState } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import {
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Grid,
+  Card,
+  CardContent,
+} from "@mui/material";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useRouter } from "next/navigation";
+import supabase from "../supabase/supaClient";
 
-export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+interface FormInputs {
+  email: string;
+  password: string;
 }
+
+const Landing: React.FC = () => {
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<FormInputs>();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false); // Toggle between admin and user login
+  const router = useRouter();
+
+  // Handle login
+  const handleLogin: SubmitHandler<FormInputs> = async ({ email, password }: FormInputs) => {
+    const role = isAdmin ? "admin" : "user";
+    setErrorMessage("");
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .single();
+
+        if (userError) throw userError;
+
+        // Store user data in sessionStorage
+        sessionStorage.setItem("user", JSON.stringify(userData));
+
+        // Compare the role from the toggle with the database
+        if (userData.role !== role) {
+          toast.error(`No ${role} found.`);
+          reset();
+          router.push("/"); // Redirect to the home or login page
+          return;
+        } else {
+          // Redirect to the appropriate page based on the role
+          if (userData.role === "admin") {
+            router.push("/admin");
+          } else {
+            router.push("/user");
+          }
+        }
+
+        toast.success("Login successful!", { position: "top-center" });
+        reset();
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unknown error occurred.");
+      }
+    }
+  };
+
+  return (
+    <Grid container spacing={2} justifyContent="center" alignItems="center" style={{ minHeight: "100vh" }}>
+      <ToastContainer />
+      <Grid item xs={12} sm={8} md={6} lg={4}>
+        <Card>
+          <CardContent>
+            <Typography variant="h4" align="center" gutterBottom>
+              Login as {isAdmin ? "Admin" : "User"}
+            </Typography>
+            <Box
+              component="form"
+              noValidate
+              autoComplete="off"
+              sx={{ mt: 2 }}
+              onSubmit={handleSubmit(handleLogin)}
+            >
+              {/* Email */}
+              <TextField
+                fullWidth
+                label="Email"
+                margin="normal"
+                {...register("email", {
+                  required: "Email is required.",
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: "Enter a valid email address.",
+                  },
+                })}
+                error={!!errors.email}
+                helperText={errors.email?.message}
+              />
+
+              {/* Password */}
+              <TextField
+                fullWidth
+                label="Password"
+                type="password"
+                margin="normal"
+                {...register("password", {
+                  required: "Password is required.",
+                  minLength: { value: 6, message: "Password must be at least 6 characters." },
+                })}
+                error={!!errors.password}
+                helperText={errors.password?.message}
+              />
+
+              {/* Submit Button */}
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                sx={{ mt: 2 }}
+                type="submit"
+              >
+                Login
+              </Button>
+
+              {/* Toggle Role Button */}
+              <Button
+                fullWidth
+                variant="outlined"
+                color="secondary"
+                sx={{ mt: 2 }}
+                onClick={() => setIsAdmin((prev) => !prev)}
+              >
+                Switch to {isAdmin ? "User" : "Admin"} Mode
+              </Button>
+
+              {/* Error Message */}
+              {errorMessage && (
+                <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
+                  {errorMessage}
+                </Typography>
+              )}
+            </Box>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+};
+
+export default Landing;
