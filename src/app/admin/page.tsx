@@ -16,6 +16,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import supabase from "@/supabase/supaClient";
 import DeleteIcon from "@mui/icons-material/Delete";
+import Protected from "@/helper/Protected";
 
 // Define form input types
 interface FormInputs {
@@ -49,7 +50,7 @@ const AdminPage: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);  // Loading state for actions
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormInputs>();
 
   // Fetch users from Supabase
@@ -58,7 +59,7 @@ const AdminPage: React.FC = () => {
   }, []);
 
   const fetchUsers = async () => {
-    setLoading(true);
+    setLoading(true); // Start loading while fetching users
     try {
       const { data, error } = await supabase.from("taskusers").select("id, email, display_name");
       if (error) throw error;
@@ -66,13 +67,14 @@ const AdminPage: React.FC = () => {
     } catch (error: any) {
       console.error("Error fetching users:", error.message);
     } finally {
-      setLoading(false);
+      setLoading(false); // Stop loading after fetching users
     }
   };
 
   // Handle form submission
   const onSubmit: SubmitHandler<FormInputs> = async ({ email, password, display_name }) => {
     setErrorMessage('');
+    setLoading(true); // Start loading when adding a user
     try {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -105,22 +107,26 @@ const AdminPage: React.FC = () => {
       setOpen(false);
     } catch (error: any) {
       setErrorMessage(error.message);
+    } finally {
+      setLoading(false); // Stop loading after form submission
     }
   };
 
   // Handle delete user
   const handleDeleteUser = async (userId: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
-  
+    
+    setLoading(true); // Start loading when deleting user
+
     try {
       // Delete user from taskusers table
       const { error: taskUserError } = await supabase.from("taskusers").delete().match({ id: userId });
       if (taskUserError) throw taskUserError;
-  
+
       // Delete user from users table
       const { error: usersError } = await supabase.from("users").delete().match({ id: userId });
       if (usersError) throw usersError;
-  
+
       // Delete user from Supabase authentication
       const response = await fetch(`/api/users/delete`, {
         method: 'DELETE',
@@ -129,22 +135,24 @@ const AdminPage: React.FC = () => {
         },
         body: JSON.stringify({ userId }),
       });
-  
+
       const result = await response.json();
-  
+
       if (!response.ok) throw new Error(result.error || "Failed to delete user");
-  
+
       // Update local state to remove the user
       setUsers(users.filter(user => user.id !== userId));
       toast.success("User deleted successfully!");
     } catch (error: any) {
       toast.error("Failed to delete user: " + error.message);
+    } finally {
+      setLoading(false); // Stop loading after deletion
     }
   };
-  
 
   return (
-    <Box sx={{ textAlign: "center", mt: 4 }}>
+  <Protected>
+      <Box sx={{ textAlign: "center", mt: 4 }}>
       <Typography variant="h4" gutterBottom>
         Admin Dashboard
       </Typography>
@@ -236,7 +244,10 @@ const AdminPage: React.FC = () => {
         </Box>
       </Modal>
     </Box>
+  </Protected>
   );
 };
 
 export default AdminPage;
+
+
