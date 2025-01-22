@@ -1,40 +1,35 @@
 "use client"
-import { createSlice } from '@reduxjs/toolkit'
-import type { PayloadAction } from '@reduxjs/toolkit'
-import type { RootState } from '@/redux-toolkit/store/store'
-// import { CartState } from '@/typescript/interface/cart.interface'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { RootState } from '@/redux-toolkit/store/store';
 
-interface userdata{
-    id: string,
-    display_name: string,
-    email: string,
-    role: string,
-    created_at:string
-  
-}
-interface user{
-    user:userdata|null
-  
+interface UserData {
+  id: string;
+  display_name: string;
+  email: string;
+  role: string;
+  created_at: string;
 }
 
-const initialState: user = {
-    user:null
+interface UserState {
+  user: UserData | null;
 }
+
+const initialState: UserState = {
+  user: null,
+};
+
 export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    addUser(state, action: PayloadAction<userdata>) {
-          console.log("the action payload is ",action.payload)
-        state.user=action.payload
-
-    }
-    
+    addUser(state, action: PayloadAction<UserData>) {
+      console.log('The action payload is ', action.payload);
+      state.user = action.payload;
+    },
   },
-})
+});
 
-        
-export const { addUser } = userSlice.actions
-export const user = (state: RootState) => state.user
+export const { addUser } = userSlice.actions;
+export const selectUser = (state: RootState) => state.user.user; // Select the user from the state
 
-export default userSlice.reducer
+export default userSlice.reducer;

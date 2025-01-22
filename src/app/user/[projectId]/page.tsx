@@ -57,14 +57,17 @@ const ProjectPage = () => {
       if (error) throw error;
 
       setTasks(data || []);
-    } catch (err: any) {
-      setError(err.message || "Error fetching tasks.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Error fetching tasks.");
+      } else {
+        setError("An unexpected error occurred.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle adding new task
   const handleAddTask = async (data: { task_name: string; end_date: string }) => {
     const { task_name, end_date } = data;
   
@@ -73,40 +76,55 @@ const ProjectPage = () => {
       return;
     }
   
+    // Handle projectId type
+    const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId || '';
+  
+    if (!projectIdStr) {
+      toast.error("Invalid project ID.");
+      return;
+    }
+  
     try {
       const { data: existingTasks, error: fetchError } = await supabase
         .from("tasks")
         .select("id")
-        .eq("project_id", parseInt(projectId))
+        .eq("project_id", parseInt(projectIdStr, 10))
         .eq("task_name", task_name);
   
       if (fetchError) throw fetchError;
   
-      if (existingTasks.length > 0) {
+      if (existingTasks && existingTasks.length > 0) {
         toast.error("A task with the same name already exists.");
-        return;  // Avoid updating state here
+        return; // Avoid updating state here
       }
   
       const { data: insertedData, error: insertError } = await supabase
         .from("tasks")
-        .insert([{
-          task_name: task_name,
-          end_date: end_date,
-          project_id: parseInt(projectId),
-        }])
+        .insert([
+          {
+            task_name: task_name,
+            end_date: end_date,
+            project_id: parseInt(projectIdStr, 10),
+          },
+        ])
         .select();
   
       if (insertError) throw insertError;
   
-      setTasks((prevTasks) => [...prevTasks, ...insertedData]);
+      setTasks((prevTasks) => [...prevTasks, ...(insertedData || [])]);
       setOpen(false);
       reset();
-      setError(""); // Clear error only after successful addition
+      setError(""); 
       toast.success("Task added successfully!", { autoClose: 3000 });
-    } catch (err: any) {
-      toast.error(err.message || "Failed to add task.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message || "Failed to add task.");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
     }
   };
+  
   
 
   // Handle Edit Task
@@ -119,7 +137,7 @@ const ProjectPage = () => {
     }
   
     try {
-      // Fetch the project ID of the task being edited
+      // Fetch the project ID related to the task being edited
       const { data: taskData, error: fetchError } = await supabase
         .from("tasks")
         .select("project_id")
@@ -128,9 +146,14 @@ const ProjectPage = () => {
   
       if (fetchError) throw fetchError;
   
-      const projectId = taskData.project_id;
+      const projectId = taskData?.project_id;
   
-      // Check if another task with the same name exists within the same project (excluding the current task)
+      if (!projectId) {
+        toast.error("Project not found.", { autoClose: 3000 });
+        return;
+      }
+  
+      // Check if another task with the same name exists in the project
       const { data: existingTasks, error: checkError } = await supabase
         .from("tasks")
         .select("id")
@@ -154,17 +177,24 @@ const ProjectPage = () => {
       if (error) throw error;
   
       // Update tasks in the local state
-      setTasks(tasks.map(task => 
-        task.id === editingTaskId ? { ...task, task_name, end_date, status } : task
-      ));
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === editingTaskId ? { ...task, task_name, end_date, status } : task
+        )
+      );
   
       setOpen(false);
       reset();
       toast.success("Task updated successfully!", { autoClose: 3000 });
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update task.", { autoClose: 3000 });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message || "Failed to update task.", { autoClose: 3000 });
+      } else {
+        toast.error("An unexpected error occurred.", { autoClose: 3000 });
+      }
     }
   };
+  
   
 
   const handleEditClick = (task: Task) => {
@@ -179,24 +209,31 @@ const ProjectPage = () => {
   // Handle Delete Task
   const handleDeleteTask = async (taskId: number) => {
     try {
+      // Attempt to delete the task from the database
       const { error } = await supabase.from("tasks").delete().eq("id", taskId);
       if (error) throw error;
-
+  
       // Remove the deleted task from the state
-      setTasks(tasks.filter((task) => task.id !== taskId));
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
       toast.success("Task deleted successfully!", { autoClose: 3000 });
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete task.");
+    } catch (err: unknown) {
+      // Handle errors with type safety
+      if (err instanceof Error) {
+        toast.error(err.message || "Failed to delete task.", { autoClose: 3000 });
+      } else {
+        toast.error("An unexpected error occurred.", { autoClose: 3000 });
+      }
     }
   };
-  const cardStyle = {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    minHeight: "150px",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-    borderRadius: "8px",
-  };
+  
+  // const cardStyle = {
+  //   display: "flex",
+  //   flexDirection: "column",
+  //   justifyContent: "space-between",
+  //   minHeight: "150px",
+  //   boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+  //   borderRadius: "8px",
+  // };
   
 
   return (
@@ -573,24 +610,25 @@ const ProjectPage = () => {
             shrink: true,
           }}
         />
-        { editingTaskId &&  
-          <Select
-            label="Status"
-            fullWidth
-            {...register("status", { required: "Status is required" })}
-            margin="normal"
-            error={!!errors.status}
-            displayEmpty
-            value={watch("status") || ""}  // Watch the value of the 'status' field or set default empty value
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            <MenuItem value="To-Do">To-Do</MenuItem>
-            <MenuItem value="In-Progress">In-Progress</MenuItem>
-            <MenuItem value="Completed">Completed</MenuItem>
-          </Select>
-        }
+       { editingTaskId &&  
+  <Select
+    label="Status"
+    fullWidth
+    {...register("status", { required: "Status is required" })}
+    margin="none"  
+    error={!!errors.status}
+    displayEmpty
+    value={watch("status") || ""}  // Watch the value of the 'status' field or set default empty value
+  >
+    <MenuItem value="">
+      <em>None</em>
+    </MenuItem>
+    <MenuItem value="To-Do">To-Do</MenuItem>
+    <MenuItem value="In-Progress">In-Progress</MenuItem>
+    <MenuItem value="Completed">Completed</MenuItem>
+  </Select>
+}
+
         {error && <Typography color="error">{error}</Typography>}
       </form>
     </DialogContent>

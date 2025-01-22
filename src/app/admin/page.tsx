@@ -8,7 +8,6 @@ import {
   Typography,
   CircularProgress,
   IconButton,
-  useTheme,
   createTheme,
   ThemeProvider,
   Card,
@@ -88,8 +87,13 @@ const AdminPage: React.FC = () => {
       const { data, error } = await supabase.from("taskusers").select("id, email, display_name");
       if (error) throw error;
       setUsers(data || []);
-    } catch (error: any) {
-      console.error("Error fetching users:", error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error fetching users:", error.message);
+        setErrorMessage(error.message);
+      } else {
+        console.error("Unknown error:", error);
+      }
     } finally {
       setLoading(false); // Stop loading after fetching users
     }
@@ -129,8 +133,13 @@ const AdminPage: React.FC = () => {
       toast.success("Sign-up successful!", { position: "top-center" });
       reset();
       setOpen(false);
-    } catch (error: any) {
-      setErrorMessage(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error fetching users:", error.message);
+        setErrorMessage(error.message);
+      } else {
+        console.error("Unknown error:", error);
+      }
     } finally {
       setLoading(false); // Stop loading after form submission
     }
@@ -165,8 +174,13 @@ const AdminPage: React.FC = () => {
       // Update local state to remove the user
       setUsers(users.filter(user => user.id !== userId));
       toast.success("User deleted successfully!");
-    } catch (error: any) {
-      toast.error("Failed to delete user: " + error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error fetching users:", error.message);
+        setErrorMessage(error.message);
+      } else {
+        console.error("Unknown error:", error);
+      }
     } finally {
       setLoading(false); // Stop loading after deletion
     }

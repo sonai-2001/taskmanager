@@ -30,16 +30,34 @@ const Header: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      sessionStorage.removeItem("user");
-      toast.success("You have been logged out!", { position: "top-center" });
-      router.push("/");
-    } catch (error: any) {
-      toast.error("Error logging out!", { position: "top-center" });
+
+
+const handleSignOut = async () => {
+  try {
+    // Sign out the user from Supabase
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) throw error; // If there's an error in signing out, throw it
+
+    // Clear session storage
+    sessionStorage.removeItem("user");
+
+    // Show success message
+    toast.success("You have been logged out!", { position: "top-center" });
+
+    // Redirect to home page or login page
+    router.push("/");
+
+  } catch (error: unknown) {
+    // Handle error with specific message
+    if (error instanceof Error) {
+      toast.error(`Error logging out: ${error.message}`, { position: "top-center" });
+    } else {
+      toast.error("An unexpected error occurred while logging out!", { position: "top-center" });
     }
-  };
+  }
+};
+
 
  
  

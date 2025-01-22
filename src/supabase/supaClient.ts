@@ -5,8 +5,12 @@ const apiKey="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 // const supabaseServiceRoleKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJydGN6ampqc2hna3JmZmN5aW9kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNzA5NDM2NywiZXhwIjoyMDUyNjcwMzY3fQ.7tVQ0dryGMGTBSAxZa5m7Gm0zl-YEmMrO8vgvd2PBkQ"
 
 
-const projectUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// const projectUrl = process.env.SUPABASE_URL;
+const projectUrl="https://rrtczjjjshgkrffcyiod.supabase.co";
+
+
+// const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceRoleKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJydGN6ampqc2hna3JmZmN5aW9kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNzA5NDM2NywiZXhwIjoyMDUyNjcwMzY3fQ.7tVQ0dryGMGTBSAxZa5m7Gm0zl-YEmMrO8vgvd2PBkQ";
 console.log("the project url is: " + projectUrl);
 const supabase=createClient(projectUrl,apiKey)
 

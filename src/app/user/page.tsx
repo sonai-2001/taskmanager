@@ -68,16 +68,21 @@ const UserPage: React.FC = () => {
       const { data, error } = await supabase
         .from("projects")
         .select("id, created_at, project_name")
-        .eq("user_id", user.id);
-
+        .eq("user_id", user?.id);
+  
       if (error) throw error;
       setProjects(data || []);
-    } catch (error: any) {
-      console.error("Error fetching projects:", error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error fetching projects:", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+      }
     } finally {
       setLoading(false);
     }
   };
+  
 
   const onSubmit: SubmitHandler<FormInputs> = async ({ project_name }) => {
     setErrorMessage("");
@@ -86,7 +91,7 @@ const UserPage: React.FC = () => {
         .from("projects")
         .select("id")
         .eq("project_name", project_name)
-        .eq("user_id", user.id)
+        .eq("user_id", user?.id)
         .single();
   
       if (fetchError && fetchError.code !== "PGRST116") {
@@ -100,38 +105,47 @@ const UserPage: React.FC = () => {
   
       const { data: newProject, error: insertError } = await supabase
         .from("projects")
-        .insert([{ project_name: project_name, user_id: user.id }])
+        .insert([{ project_name: project_name, user_id: user?.id }])
         .select()
         .single();
   
       if (insertError) throw insertError;
   
-      setProjects([...projects, newProject]);
+      setProjects((prevProjects) => [...prevProjects, newProject]);
       toast.success("Project added successfully!", { autoClose: 3000 });
       reset();
       setOpen(false);
-    } catch (error: any) {
-      toast.error("Failed to add project: " + error.message, { autoClose: 3000 });
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error("Failed to add project: " + error.message, { autoClose: 3000 });
+      } else {
+        toast.error("An unexpected error occurred", { autoClose: 3000 });
+      }
     }
   };
-
+  
   const handleDeleteProject = async (projectId: number) => {
     if (!confirm("Are you sure you want to delete this project?")) return;
-
+  
     try {
       const { error: deleteError } = await supabase
         .from("projects")
         .delete()
         .match({ id: projectId });
-
+  
       if (deleteError) throw deleteError;
-
-      setProjects(projects.filter((project) => project.id !== projectId));
+  
+      setProjects((prevProjects) => prevProjects.filter((project) => project.id !== projectId));
       toast.success("Project deleted successfully!", { autoClose: 3000 });
-    } catch (error: any) {
-      toast.error("Failed to delete project: " + error.message, { autoClose: 3000 });
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error("Failed to delete project: " + error.message, { autoClose: 3000 });
+      } else {
+        toast.error("An unexpected error occurred", { autoClose: 3000 });
+      }
     }
   };
+  
 
   const isDarkMode = true; 
 
