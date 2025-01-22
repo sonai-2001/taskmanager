@@ -6,9 +6,7 @@ import {
   Modal,
   TextField,
   Typography,
-  List,
-  ListItem,
-  ListItemText,
+ 
   CircularProgress,
   IconButton,
 } from "@mui/material";
@@ -81,11 +79,9 @@ const UserPage: React.FC = () => {
     }
   };
 
-  // Handle form submission to add a project
   const onSubmit: SubmitHandler<FormInputs> = async ({ project_name }) => {
     setErrorMessage("");
     try {
-      // Check if project with the same name exists for the user
       const { data: existingProject, error: fetchError } = await supabase
         .from("projects")
         .select("id")
@@ -94,7 +90,7 @@ const UserPage: React.FC = () => {
         .single();
   
       if (fetchError && fetchError.code !== "PGRST116") {
-        throw fetchError; // Throw error if it's not a "No rows found" error
+        throw fetchError; 
       }
   
       if (existingProject) {
@@ -102,7 +98,6 @@ const UserPage: React.FC = () => {
         return;
       }
   
-      // Insert new project if no duplicate found
       const { data: newProject, error: insertError } = await supabase
         .from("projects")
         .insert([{ project_name: project_name, user_id: user.id }])
@@ -119,9 +114,7 @@ const UserPage: React.FC = () => {
       toast.error("Failed to add project: " + error.message, { autoClose: 3000 });
     }
   };
-  
 
-  // Handle project deletion
   const handleDeleteProject = async (projectId: number) => {
     if (!confirm("Are you sure you want to delete this project?")) return;
 
@@ -140,95 +133,180 @@ const UserPage: React.FC = () => {
     }
   };
 
+  const isDarkMode = true; 
+
   if (user) {
     return (
       <Protected>
+        <Box
+          sx={{
+            textAlign: "center",
+            bgcolor: isDarkMode ? "#121212" : "#fff", 
+            color: isDarkMode ? "#fff" : "#000", 
+            minHeight: "100vh", 
+            padding: 2,
+          }}
+        >
+          <ToastContainer />
+          <Typography variant="h4" gutterBottom>
+            {user.display_name} Projects
+          </Typography>
 
-<Box sx={{ textAlign: "center", mt: 4 }}>
-        <ToastContainer />
+          <Button
+  variant="contained"
+  color="secondary"
+  onClick={() => setOpen(true)}
+  sx={{
+    backgroundColor: isDarkMode ? "#333" : "#1976d2", 
+    color: isDarkMode ? "#fff" : "#fff", 
+    "&:hover": {
+      backgroundColor: isDarkMode ? "#555" : "#1565c0", 
+    },
+  }}
+>
+  Add Project
+</Button>
 
-        <Typography variant="h4" gutterBottom>
-          {user.display_name} Projects
-        </Typography>
 
-        <Button variant="contained" color="primary" onClick={() => setOpen(true)}>
-          Add Project
-        </Button>
 
-        <Box mt={4}>
-          <Typography variant="h6">Project List</Typography>
-          {loading ? (
-            <CircularProgress />
-          ) : projects.length > 0 ? (
-            <List>
-              {projects.map((project) => (
-               <ListItem key={project.id} divider>
-               <ListItemText
-                 primary={
-                   <Link href={`/user/${project.id}`} passHref>
-                     <Typography 
-                       variant="body1" 
-                       component="a" 
-                       sx={{ color: "blue", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
-                     >
-                       {project.project_name}
-                     </Typography>
-                   </Link>
-                 }
-                 secondary={`Created at: ${new Intl.DateTimeFormat("en-IN", {
-                   day: "2-digit",
-                   month: "2-digit",
-                   year: "numeric",
-                   hour: "2-digit",
-                   minute: "2-digit",
-                   second: "2-digit",
-                   hour12: true,
-                   timeZone: "Asia/Kolkata",
-                 }).format(new Date(project.created_at))}`}
-               />
-               <IconButton onClick={() => handleDeleteProject(project.id)} color="error">
-                 <DeleteIcon />
-               </IconButton>
-             </ListItem>
-              ))}
-            </List>
-          ) : (
-            <Typography>No projects found.</Typography>
-          )}
-        </Box>
-
-        <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="modal-title">
-          <Box sx={modalStyle}>
-            <Typography id="modal-title" variant="h6" gutterBottom>
-              Add New Project
-            </Typography>
-
-            <form onSubmit={handleSubmit(onSubmit)} noValidate>
-              <TextField
-                fullWidth
-                label="Project name"
-                margin="normal"
-                {...register("project_name", { required: "Project name is required." })}
-                error={!!errors.project_name}
-                helperText={errors.project_name?.message}
-              />
-
-              <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-                Add
-              </Button>
-              <Button onClick={() => setOpen(false)} variant="outlined" sx={{ mt: 2, ml: 2 }}>
-                Cancel
-              </Button>
-            </form>
-
-            {errorMessage && (
-              <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
-                {errorMessage}
-              </Typography>
+          <Box mt={4}>
+            <Typography variant="h6">Project List</Typography>
+            {loading ? (
+              <CircularProgress />
+            ) : projects.length > 0 ? (
+              <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}>
+                {projects.map((project) => (
+                <Box
+                key={project.id}
+                sx={{
+                  backgroundColor: isDarkMode ? "#1d1d1d" : "#f9f9f9",
+                  borderRadius: 2,
+                  boxShadow: 2,
+                  margin: 2,
+                  padding: 2,
+                  width: "250px",
+                  textAlign: "left",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Link href={`/user/${project.id}`} passHref>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      textDecoration: "none",
+                      cursor: "pointer",
+                      "&:hover": { boxShadow: 3 },
+                    }}
+                  >
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: isDarkMode ? "#bb86fc" : "#1976d2",
+                        textDecoration: "none",
+                        "&:hover": { textDecoration: "underline" },
+                      }}
+                    >
+                      {project.project_name}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: isDarkMode ? "#bbb" : "#666",
+                        mt: 1,
+                        mb: 1,
+                      }}
+                    >
+                      Created at:{" "}
+                      {new Intl.DateTimeFormat("en-IN", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: true,
+                        timeZone: "Asia/Kolkata",
+                      }).format(new Date(project.created_at))}
+                    </Typography>
+                  </Box>
+                </Link>
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent the link click event from firing
+                    handleDeleteProject(project.id);
+                  }}
+                  color="error"
+                  sx={{ alignSelf: "flex-end" }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+              
+                ))}
+              </Box>
+            ) : (
+              <Typography>No projects found.</Typography>
             )}
           </Box>
-        </Modal>
-      </Box>
+
+          <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="modal-title">
+            <Box sx={{ ...modalStyle, bgcolor: isDarkMode ? "#333" : "#fff" }}>
+              <Typography id="modal-title" variant="h6" gutterBottom sx={{ color: isDarkMode ? "#fff" : "#000" }}>
+                Add New Project
+              </Typography>
+
+              <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                <TextField
+                  fullWidth
+                  label="Project name"
+                  margin="normal"
+                  {...register("project_name", { required: "Project name is required." })}
+                  error={!!errors.project_name}
+                  helperText={errors.project_name?.message}
+                  sx={{
+                    "& .MuiInputBase-root": {
+                      backgroundColor: isDarkMode ? "#555" : "#fff",
+                      color: isDarkMode ? "#fff" : "#000",
+                    },
+                  }}
+                />
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  sx={{
+                    mt: 2,
+                    backgroundColor: isDarkMode ? "#1d1d1d" : "#1976d2",
+                    color: isDarkMode ? "#fff" : "#000",
+                  }}
+                >
+                  Add
+                </Button>
+                <Button
+                  onClick={() => setOpen(false)}
+                  variant="outlined"
+                  sx={{
+                    mt: 2,
+                    ml: 2,
+                    color: isDarkMode ? "#bbb" : "#000",
+                    borderColor: isDarkMode ? "#bbb" : "#000",
+                  }}
+                >
+                  Cancel
+                </Button>
+              </form>
+
+              {errorMessage && (
+                <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
+                  {errorMessage}
+                </Typography>
+              )}
+            </Box>
+          </Modal>
+        </Box>
       </Protected>
     );
   } else {

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -6,17 +6,21 @@ import {
   Modal,
   TextField,
   Typography,
-  List,
-  ListItem,
-  ListItemText,
   CircularProgress,
   IconButton,
+  useTheme,
+  createTheme,
+  ThemeProvider,
+  Card,
+  CardHeader,
+  CardContent,
 } from "@mui/material";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
 import supabase from "@/supabase/supaClient";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Protected from "@/helper/Protected";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 // Define form input types
 interface FormInputs {
@@ -39,7 +43,8 @@ const modalStyle = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 400,
+  width: "90%",
+  maxWidth: 500,
   bgcolor: "background.paper",
   boxShadow: 24,
   p: 4,
@@ -50,8 +55,27 @@ const AdminPage: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);  // Loading state for actions
+  const [loading, setLoading] = useState(false); // Loading state for actions
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormInputs>();
+  const router = useRouter(); // Use the router hook
+
+  // Custom Dark Theme
+  const darkTheme = createTheme({
+    palette: {
+      mode: "dark",
+      background: {
+        default: "#121212",
+        paper: "#1e1e1e",
+      },
+      text: {
+        primary: "#ffffff",
+        secondary: "#b0b0b0",
+      },
+      primary: {
+        main: "#bb86fc",
+      },
+    },
+  });
 
   // Fetch users from Supabase
   useEffect(() => {
@@ -89,13 +113,13 @@ const AdminPage: React.FC = () => {
       const userId = signUpData.user?.id;
       if (!userId) throw new Error("User ID not found during sign-up.");
 
-      const { error: insertError } = await supabase.from("users").insert([
+      const { error: insertError } = await supabase.from("users").insert([ 
         { id: userId, email, display_name, role: "user" },
       ]);
 
       if (insertError) throw insertError;
 
-      const { error: insert2Error } = await supabase.from("taskusers").insert([
+      const { error: insert2Error } = await supabase.from("taskusers").insert([ 
         { id: userId, email, display_name, role: "user" },
       ]);
 
@@ -130,9 +154,7 @@ const AdminPage: React.FC = () => {
       // Delete user from Supabase authentication
       const response = await fetch(`/api/users/delete`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
       });
 
@@ -151,103 +173,119 @@ const AdminPage: React.FC = () => {
   };
 
   return (
-  <Protected>
-      <Box sx={{ textAlign: "center", mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Admin Dashboard
-      </Typography>
-
-      <Button variant="contained" color="primary" onClick={() => setOpen(true)}>
-        Add User
-      </Button>
-
-      <Box mt={4}>
-        <Typography variant="h6">User List</Typography>
-        {loading ? (
-          <CircularProgress />
-        ) : users.length > 0 ? (
-          <List>
-            {users.map((user) => (
-              <ListItem key={user.id} divider>
-                <ListItemText primary={user.display_name} secondary={user.email} />
-                <IconButton onClick={() => handleDeleteUser(user.id)} color="error">
-                  <DeleteIcon />
-                </IconButton>
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          <Typography>No users found.</Typography>
-        )}
-      </Box>
-
-      <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="modal-title">
-        <Box sx={modalStyle}>
-          <Typography id="modal-title" variant="h6" gutterBottom>
-            Add New User
+    <Protected>
+      <ThemeProvider theme={darkTheme}>
+        <Box sx={{ textAlign: "center", bgcolor: 'background.default', minHeight: '100vh' }}>
+          <Typography variant="h4" color="text.primary" gutterBottom>
+            Admin Dashboard
           </Typography>
 
-          <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <TextField
-              fullWidth
-              label="Username"
-              margin="normal"
-              {...register("display_name", { required: "Username is required." })}
-              error={!!errors.display_name}
-              helperText={errors.display_name?.message}
-            />
+          <Button variant="contained" color="primary" onClick={() => setOpen(true)} sx={{ mb: 3, ml: 5, mr: 2 }}>
+  Add User
+</Button>
 
-            <TextField
-              fullWidth
-              label="Email"
-              margin="normal"
-              {...register("email", {
-                required: "Email is required.",
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Enter a valid email address.",
-                },
-              })}
-              error={!!errors.email}
-              helperText={errors.email?.message}
-            />
+<Button variant="outlined" color="secondary" onClick={() => router.back()} sx={{ mb: 3 }}>
+  Back
+</Button>
 
-            <TextField
-              fullWidth
-              label="Password"
-              type="password"
-              margin="normal"
-              {...register("password", {
-                required: "Password is required.",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters long.",
-                },
-              })}
-              error={!!errors.password}
-              helperText={errors.password?.message}
-            />
 
-            <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-              Add
-            </Button>
-            <Button onClick={() => setOpen(false)} variant="outlined" sx={{ mt: 2, ml: 2 }}>
-              Cancel
-            </Button>
-          </form>
+          <Box mt={4}>
+            <Typography variant="h6" color="text.primary">User List</Typography>
+            {loading ? (
+              <CircularProgress />
+            ) : users.length > 0 ? (
+              <Box display="flex" flexWrap="wrap" justifyContent="center">
+                {users.map((user) => (
+                  <Card key={user.id} sx={{ maxWidth: 300, m: 2, bgcolor: 'background.paper', borderRadius: 2 }}>
+                    <CardHeader
+                      action={
+                        <IconButton onClick={() => handleDeleteUser(user.id)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      }
+                      title={<Typography variant="h6" color="text.primary">{user.display_name}</Typography>}
+                      subheader={<Typography variant="body2" color="text.secondary">{user.email}</Typography>}
+                    />
+                    <CardContent>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            ) : (
+              <Typography color="text.secondary">No users found.</Typography>
+            )}
+          </Box>
 
-          {errorMessage && (
-            <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
-              {errorMessage}
-            </Typography>
-          )}
+          {/* Add User Modal */}
+          <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="modal-title">
+            <Box sx={modalStyle}>
+              <Typography id="modal-title" variant="h6" color="text.primary" gutterBottom>
+                Add New User
+              </Typography>
+
+              <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                <TextField
+                  fullWidth
+                  label="Username"
+                  margin="normal"
+                  {...register("display_name", { required: "Username is required." })}
+                  error={!!errors.display_name}
+                  helperText={errors.display_name?.message}
+                  sx={{ mb: 2 }}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Email"
+                  margin="normal"
+                  {...register("email", {
+                    required: "Email is required.",
+                    pattern: {
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      message: "Enter a valid email address.",
+                    },
+                  })}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                  sx={{ mb: 2 }}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Password"
+                  type="password"
+                  margin="normal"
+                  {...register("password", {
+                    required: "Password is required.",
+                    minLength: {
+                      value: 6,
+                      message: "Password must be at least 6 characters long.",
+                    },
+                  })}
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
+                  sx={{ mb: 2 }}
+                />
+
+                <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
+                  Add
+                </Button>
+                <Button onClick={() => setOpen(false)} variant="outlined" sx={{ mt: 2, ml: 2 }}>
+                  Cancel
+                </Button>
+              </form>
+
+              {errorMessage && (
+                <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
+                  {errorMessage}
+                </Typography>
+              )}
+            </Box>
+          </Modal>
         </Box>
-      </Modal>
-    </Box>
-  </Protected>
+      </ThemeProvider>
+    </Protected>
   );
 };
 
 export default AdminPage;
-
-
