@@ -27,9 +27,9 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ task, edit, handleDelete }) => 
   });
 
   return (
+    <div ref={(node) => { if (node) dragRef(node); }}>
     <Card
       component="div"
-      ref={dragRef}
       sx={{
         padding: 2,
         marginBottom: 2,
@@ -42,7 +42,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ task, edit, handleDelete }) => 
       <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1 }}>
         {task.task_name}
       </Typography>
-
+  
       <Stack direction="row" spacing={2} justifyContent="flex-end">
         <Button 
           variant="contained" 
@@ -52,7 +52,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ task, edit, handleDelete }) => 
         >
           Edit
         </Button>
-        
+  
         <Button 
           variant="contained" 
           color="error" 
@@ -63,7 +63,10 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ task, edit, handleDelete }) => 
         </Button>
       </Stack>
     </Card>
+  </div>
+  
   );
+  
 };
 
 export default KanbanCard;

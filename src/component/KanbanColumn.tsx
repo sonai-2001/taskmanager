@@ -43,37 +43,39 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
 
   return (
     <Grid
-    component="div"
-    item
-    xs={12}
-    sm={6}
-    md={4}
-    ref={dropRef}
-    sx={{
-      backgroundColor: isOver ? "primary.light" : "grey.100",
-      borderRadius: 2,
-      padding: 2,
-      minHeight: "300px",
-    }}
-  >
-    <Typography variant="h6" color="textPrimary" sx={{ marginBottom: 2, textAlign: "center" }}>
-      {title}
-    </Typography>
-    {tasks.length>0?(tasks
+  component="div"
+  item
+  xs={12}
+  sm={6}
+  md={4}
+  ref={(node) => {
+    if (node) dropRef(node);
+  }}
+  sx={{
+    backgroundColor: isOver ? "primary.light" : "grey.100",
+    borderRadius: 2,
+    padding: 2,
+    minHeight: "300px",
+  }}
+>
+  <Typography variant="h6" color="textPrimary" sx={{ marginBottom: 2, textAlign: "center" }}>
+    {title}
+  </Typography>
+
+  {tasks.length > 0 ? (
+    tasks
       .filter((task) => task.status === status)
       .map((task) => (
-        <KanbanCard
-          key={task.id}
-          task={task}
-          edit={edit}
-          handleDelete={handleDelete}
-        />
-      ))):(
-        <Typography variant="h5"  sx={{ textAlign: "center" ,color:"black"}}>
-          No tasks in this column
-        </Typography>
-      )}
-  </Grid>
+        <KanbanCard key={task.id} task={task} edit={edit} handleDelete={handleDelete} />
+      ))
+  ) : (
+    <Typography variant="h5" sx={{ textAlign: "center", color: "black" }}>
+      No tasks in this column
+    </Typography>
+  )}
+</Grid>
+
+  
   
   
   );

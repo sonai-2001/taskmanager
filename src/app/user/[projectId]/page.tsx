@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import supabase from "@/supabase/supaClient";
-import { Button, CircularProgress,  Typography, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Select, MenuItem, Grid, Card, CardContent, CardActions, Box } from "@mui/material";
+import { Button, CircularProgress,  Typography, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Select, MenuItem, Grid,  Box } from "@mui/material";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { DndProvider } from "react-dnd";
