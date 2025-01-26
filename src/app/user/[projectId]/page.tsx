@@ -6,8 +6,10 @@ import supabase from "@/supabase/supaClient";
 import { Button, CircularProgress,  Typography, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Select, MenuItem, Grid, Card, CardContent, CardActions, Box } from "@mui/material";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { useForm } from "react-hook-form";
+import KanbanColumn from "@/component/KanbanColumn";
 
 // Task type definition
 interface Task {
@@ -18,6 +20,7 @@ interface Task {
   end_date: string;
   project_id: number;
 }
+
 
 const ProjectPage = () => {
   const { projectId } = useParams();  
@@ -122,6 +125,29 @@ const ProjectPage = () => {
       } else {
         toast.error("An unexpected error occurred.");
       }
+    }
+  };
+
+  const handleDrop =async (taskId:number, newStatus:string) => {
+    try {
+      const { error } = await supabase
+    .from("tasks")  // Replace with your actual table name
+    .update({ status: newStatus })
+    .eq("id", taskId);
+
+  if (error) {
+    throw error.message
+  } else {
+    console.log(`Task ${taskId} updated successfully in Supabase`);
+  }
+    
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId ? { ...task, status: newStatus } : task
+      )
+    );
+    } catch (error) {
+        toast.error(`Failed to update task status: ${error}`);
     }
   };
   
@@ -319,268 +345,40 @@ const ProjectPage = () => {
   ) : error ? (
     <Typography color="error">{error}</Typography>
   ) : tasks.length > 0 ? (
-    <Grid container spacing={3} sx={{ padding: 2 }}>
-      {/* To-Do Column */}
-      <Grid item xs={12} sm={4}>
-  <Typography
-    variant="h5"
-    sx={{
-      textAlign: "center",
-      fontWeight: "bold",
-      mb: 2,
-      color: "#d32f2f",
-    }}
-  >
-    To-Do
-  </Typography>
-  <Box
-    sx={{
-      minHeight: "300px",
-      padding: "20px",
-      backgroundColor: "#ffebee",
-      borderRadius: "8px",
-      display: "flex",
-      flexDirection: "column",
-      gap: 2, // Adds vertical gap between cards
-    }}
-  >
-    {tasks.filter((task) => task.status === "To-Do").length > 0 ? (
-      tasks
-        .filter((task) => task.status === "To-Do")
-        .map((task) => (
-          <Card
-            key={task.id}
-            variant="elevation"
-            elevation={6} // Increased elevation for better visual effect
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 1, // Adds vertical gap inside each card
-              padding: "10px",
-              backgroundColor: "#fff", // White background for cards
-              borderRadius: "8px",
-              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", // Added box shadow for depth
-            }}
-          >
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-                {task.task_name}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                <b>End Date:</b>{" "}
-                {new Intl.DateTimeFormat("en-IN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                }).format(new Date(task.end_date))}
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button
-                size="small"
-                color="primary"
-                onClick={() => handleEditClick(task)}
-              >
-                Edit
-              </Button>
-              <Button
-                size="small"
-                color="error"
-                onClick={() => handleDeleteTask(task.id)}
-              >
-                Delete
-              </Button>
-            </CardActions>
-          </Card>
-        ))
-    ) : (
-      <Typography
-        color="textPrimary"
-        variant="h6"
-        align="center"
-        sx={{ marginTop: "20px", fontStyle: "italic" }}
+    <DndProvider backend={HTML5Backend}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ padding: 2 }}
+        justifyContent="center"
+        alignItems="flex-start"
       >
-        No tasks in To-Do
-      </Typography>
-    )}
-  </Box>
-</Grid>
-
-
-      {/* In-Progress Column */}
-      <Grid item xs={12} sm={4}>
-  <Typography
-    variant="h5"
-    sx={{
-      textAlign: "center",
-      fontWeight: "bold",
-      mb: 2,
-      color: "#f57c00", // Orange color for "In-Progress"
-    }}
-  >
-    In-Progress
-  </Typography>
-  <Box
-    sx={{
-      minHeight: "300px",
-      padding: "20px",
-      backgroundColor: "#fff3e0", // Light orange background for the column
-      borderRadius: "8px",
-      display: "flex",
-      flexDirection: "column",
-      gap: 2, // Adds vertical gap between cards
-    }}
-  >
-    {tasks.filter((task) => task.status === "In-Progress").length > 0 ? (
-      tasks
-        .filter((task) => task.status === "In-Progress")
-        .map((task) => (
-          <Card
-            key={task.id}
-            variant="elevation"
-            elevation={6} // Increased elevation for better visual effect
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 1, // Adds vertical gap inside each card
-              padding: "10px",
-              backgroundColor: "#fff", // White background for cards
-              borderRadius: "8px",
-              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", // Added box shadow for depth
-            }}
-          >
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-                {task.task_name}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                <b>End Date:</b>{" "}
-                {new Intl.DateTimeFormat("en-IN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                }).format(new Date(task.end_date))}
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button
-                size="small"
-                color="primary"
-                onClick={() => handleEditClick(task)}
-              >
-                Edit
-              </Button>
-              <Button
-                size="small"
-                color="error"
-                onClick={() => handleDeleteTask(task.id)}
-              >
-                Delete
-              </Button>
-            </CardActions>
-          </Card>
-        ))
-    ) : (
-      <Typography
-        color="textPrimary"
-        variant="h6"
-        align="center"
-        sx={{ marginTop: "20px", fontStyle: "italic" }}
-      >
-        No tasks in In-Progress
-      </Typography>
-    )}
-  </Box>
-</Grid>
-
-
-      {/* Completed Column */}
-      <Grid item xs={12} sm={4}>
-  <Typography
-    variant="h5"
-    sx={{
-      textAlign: "center",
-      fontWeight: "bold",
-      mb: 2,
-      color: "#388e3c", // Green color for "Completed"
-    }}
-  >
-    Completed
-  </Typography>
-  <Box
-    sx={{
-      minHeight: "300px",
-      padding: "20px",
-      backgroundColor: "#e8f5e9", // Light green background for the column
-      borderRadius: "8px",
-      display: "flex",
-      flexDirection: "column",
-      gap: 2, // Adds vertical gap between cards
-    }}
-  >
-    {tasks.filter((task) => task.status === "Completed").length > 0 ? (
-      tasks
-        .filter((task) => task.status === "Completed")
-        .map((task) => (
-          <Card
-            key={task.id}
-            variant="elevation"
-            elevation={6} // Increased elevation for better visual effect
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 1, // Adds vertical gap inside each card
-              padding: "10px",
-              backgroundColor: "#fff", // White background for cards
-              borderRadius: "8px",
-              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", // Added box shadow for depth
-            }}
-          >
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-                {task.task_name}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                <b>End Date:</b>{" "}
-                {new Intl.DateTimeFormat("en-IN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                }).format(new Date(task.end_date))}
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button
-                size="small"
-                color="primary"
-                onClick={() => handleEditClick(task)}
-              >
-                Edit
-              </Button>
-              <Button
-                size="small"
-                color="error"
-                onClick={() => handleDeleteTask(task.id)}
-              >
-                Delete
-              </Button>
-            </CardActions>
-          </Card>
-        ))
-    ) : (
-      <Typography
-        color="textPrimary"
-        variant="h6"
-        align="center"
-        sx={{ marginTop: "20px", fontStyle: "italic" }}
-      >
-        No tasks in Completed
-      </Typography>
-    )}
-  </Box>
-</Grid>
-
-    </Grid>
+        <KanbanColumn
+          title="To Do"
+          status="To-Do"
+          tasks={tasks}
+          onDrop={handleDrop}
+          edit={handleEditClick}
+          handleDelete={handleDeleteTask}
+        />
+        <KanbanColumn
+          title="In Progress"
+          status="In-Progress"
+          tasks={tasks}
+          onDrop={handleDrop}
+          edit={handleEditClick}
+          handleDelete={handleDeleteTask}
+        />
+        <KanbanColumn
+          title="Completed"
+          status="Completed"
+          tasks={tasks}
+          onDrop={handleDrop}
+          edit={handleEditClick}
+          handleDelete={handleDeleteTask}
+        />
+      </Grid>
+    </DndProvider>
   ) : (
     <Typography>No tasks found for this project.</Typography>
   )}
@@ -610,7 +408,7 @@ const ProjectPage = () => {
             shrink: true,
           }}
         />
-       { editingTaskId &&  
+       { !editingTaskId &&  
   <Select
     label="Status"
     fullWidth
