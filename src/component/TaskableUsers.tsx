@@ -12,17 +12,21 @@ import {
 } from "@mui/material";
 import supabase from "@/supabase/supaClient";
 import { darkTheme } from "@/helper/theme";
+import {  setTaskableUser, setUsers } from "@/redux-toolkit/slice/adminSlice";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux/page";
 
-interface TaskableUser {
-  id: number;
-  display_name: string;
-  email: string;
-}
+// interface TaskableUser {
+//   id: string;
+//   display_name: string;
+//   email: string;
+// }
 
 const TaskableUsers: FC = () => {
-  const [taskableUsers, setTaskableUsers] = useState<TaskableUser[]>([]);
+  // const [taskableUsers, setTaskableUsers] = useState<TaskableUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const dispatch=useAppDispatch()
+  const {taskableUsers,users}=useAppSelector(store=>store.admin)
 
   useEffect(() => {
     const getTaskableUsers = async () => {
@@ -35,10 +39,10 @@ const TaskableUsers: FC = () => {
           throw error;
         }
         console.log("the taskable data is ",data)
-        setTaskableUsers(data);
+        dispatch(setTaskableUser(data));
         setLoading(false);
         // const users = await fetchTaskableUsers();
-        setTaskableUsers(data);
+        // setTaskableUsers(data);
       } catch (error) {
         if (error instanceof Error) {
           console.error("Error fetching users:", error.message);
@@ -50,11 +54,37 @@ const TaskableUsers: FC = () => {
     };
     getTaskableUsers();
   }, [])
+    
+  const handleRemoveUser = async (id: string) => {
+    try {
+      setLoading(true);
+      await removeTaskableUser(id);
+    const { error } = await supabase
+    .from("users")
+    .update({added_taskable:false})
+    .eq("id", id);
 
-  const handleRemoveUser = async (id: number) => {
-    await removeTaskableUser(id);
-    setTaskableUsers(taskableUsers.filter((user) => user.id !== id));
-  };
+    if(error) throw error
+
+    dispatch(setTaskableUser(taskableUsers.filter((user) => user.id !== id)));
+    dispatch(setUsers(users.map((user)=>{
+           if(user.id===id){
+             return {...user, added_taskable: false }
+           }else{
+             return user;
+           }
+    })))
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error fetching users:", error.message);
+        setErrorMessage(error.message);
+      } else {
+        console.error("Unknown error:", error);
+      }
+    }finally{
+      setLoading(false)
+    }
+  }
   //    const fetchTaskableUsers = async (): Promise<TaskableUser[]> => {
   //     const { data, error } = await supabase.from("taskusers").select("id,display_name,email");
   //     if (error) {
@@ -64,7 +94,7 @@ const TaskableUsers: FC = () => {
   //     return data;
   //   };
 
-  const removeTaskableUser = async (id: number): Promise<void> => {
+  const removeTaskableUser = async (id: string): Promise<void> => {
     const { error } = await supabase.from("taskusers").delete().eq("id", id);
     if (error) {
       console.error("Error removing user:", error);

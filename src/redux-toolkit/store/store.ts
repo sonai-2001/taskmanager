@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer from '@/redux-toolkit/slice/userSlice';
+import adminReducer from '@/redux-toolkit/slice/adminSlice';
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
       user: userReducer,
+      admin:adminReducer
     },
   });
 };

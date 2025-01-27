@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation"; // Import useRouter
 import { darkTheme } from "@/helper/theme";
 import TaskableUsers from "@/component/TaskableUsers";
 import { toast } from "react-toastify";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux/page";
+import { addTaskableUsers, setUsers } from "@/redux-toolkit/slice/adminSlice";
 
 // Define form input types
 // interface FormInputs {
@@ -54,10 +56,12 @@ interface User {
 const AdminPage: React.FC = () => {
   // const [open, setOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [users, setUsers] = useState<User[]>([]);
+  // const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false); // Loading state for actions
   // const { register, handleSubmit, formState: { errors }, reset } = useForm<FormInputs>();
   const router = useRouter(); // Use the router hook
+  const dispatch=useAppDispatch()
+  const {users}=useAppSelector(store=>store.admin)
 
   // Custom Dark Theme
   // const darkTheme = createTheme({
@@ -90,7 +94,7 @@ const AdminPage: React.FC = () => {
         .select("id, email, display_name,added_taskable")
         .eq("role", "user");
       if (error) throw error;
-      setUsers(data || []);
+      dispatch(setUsers(data || []));
     } catch (error) {
       if (error instanceof Error) {
         console.error("Error fetching users:", error.message);
@@ -203,6 +207,7 @@ const AdminPage: React.FC = () => {
         const { error: insertError } = await supabase
          .from("taskusers")
          .insert([{ id: user.id, email: user.email, display_name: user.display_name }])
+         
 
           if (insertError) throw insertError;
 
@@ -213,8 +218,15 @@ const AdminPage: React.FC = () => {
 
           if(updateError) throw updateError;
           
-          setUsers(users.map((u) => u.id === user.id? {...u, added_taskable: true } : u)); // Update the user in local state to mark it as added to taskable users table
-          
+             dispatch(setUsers(users.map((u:User) => u.id === user.id? {...u, added_taskable: true } : u)) // Update the user in local state to mark it as added to taskable users table
+            ) 
+            dispatch(addTaskableUsers({
+              id:user.id,
+              display_name: user.display_name,
+              email: user.email,
+            
+            }))
+
           toast.success("User added to taskable users!", { position: "top-center" });
       }catch(error){
         if (error instanceof Error) {
