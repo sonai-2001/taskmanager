@@ -15,10 +15,8 @@ import { toast, ToastContainer } from "react-toastify";
 import supabase from "@/supabase/supaClient";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useAppSelector } from "@/hooks/redux/page";
-import { useRouter } from "next/navigation";
 import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
-import Protected from "@/helper/Protected";
 
 // Define form input types
 interface FormInputs {
@@ -47,7 +45,6 @@ const modalStyle = {
 
 const UserPage: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
   const [errorMessage, setErrorMessage] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,10 +52,7 @@ const UserPage: React.FC = () => {
   const { user } = useAppSelector((store) => store.user);
 
   useEffect(() => {
-    if (!user) {
-      router.push("/");
-      return;
-    }
+    
     fetchProjects();
   }, []);
 
@@ -151,8 +145,7 @@ const UserPage: React.FC = () => {
 
   if (user) {
     return (
-      <Protected>
-        <Box
+          <Box
           sx={{
             textAlign: "center",
             bgcolor: isDarkMode ? "#121212" : "#fff", 
@@ -321,10 +314,9 @@ const UserPage: React.FC = () => {
             </Box>
           </Modal>
         </Box>
-      </Protected>
     );
   } else {
-    router.push("/");
+   
     return null;
   }
 };

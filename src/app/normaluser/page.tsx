@@ -6,7 +6,7 @@ import { Container, Typography, Paper, Box } from "@mui/material";
 
 const NormalUser = () => {
   return (
-    <ThemeProvider theme={darkTheme}>
+     <ThemeProvider theme={darkTheme}>
       <Container
         maxWidth="xl"
         sx={{

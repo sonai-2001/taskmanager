@@ -15,7 +15,6 @@ import {
 // import { toast } from "react-toastify";
 import supabase from "@/supabase/supaClient";
 // import DeleteIcon from "@mui/icons-material/Delete";
-import Protected from "@/helper/Protected";
 import { useRouter } from "next/navigation"; // Import useRouter
 import { darkTheme } from "@/helper/theme";
 import TaskableUsers from "@/component/TaskableUsers";
@@ -243,8 +242,8 @@ const AdminPage: React.FC = () => {
   };
 
   return (
-    <Protected>
-      <ThemeProvider theme={darkTheme}>
+     
+       <ThemeProvider theme={darkTheme}>
         <Box
           sx={{
             textAlign: "center",
@@ -435,7 +434,6 @@ const AdminPage: React.FC = () => {
           </Modal> */}
         </Box>
       </ThemeProvider>
-    </Protected>
   );
 };
 

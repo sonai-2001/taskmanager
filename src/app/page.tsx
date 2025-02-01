@@ -85,7 +85,7 @@ const Landing: React.FC = () => {
       });
 
       if (error) throw error;
-       console.log("the data is",DataView)
+       console.log("the data is",data)
       if (data) {
         const { data: userData, error: userError } = await supabase
           .from("users")
