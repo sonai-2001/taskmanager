@@ -71,10 +71,10 @@ const ProjectPage = () => {
     }
   };
 
-  const handleAddTask = async (data: { task_name: string; end_date: string }) => {
-    const { task_name, end_date } = data;
+  const handleAddTask = async (data: { task_name: string; end_date: string,status:string }) => {
+    const { task_name, end_date,status } = data;
   
-    if (!task_name || !end_date) {
+    if (!task_name || !end_date|| !status) {
       setError("Please fill in all the fields.");
       return;
     }
@@ -108,6 +108,7 @@ const ProjectPage = () => {
             task_name: task_name,
             end_date: end_date,
             project_id: parseInt(projectIdStr, 10),
+            status: status,
           },
         ])
         .select();
@@ -158,7 +159,7 @@ const ProjectPage = () => {
   const handleEditTask = async (data: { task_name: string; end_date: string; status: string }) => {
     const { task_name, end_date, status } = data;
   
-    if (!task_name || !end_date) {
+    if (!task_name || !end_date ) {
       toast.error("Please fill in all the fields.", { autoClose: 3000 });
       return;
     }
@@ -398,17 +399,21 @@ const ProjectPage = () => {
           helperText={errors.task_name?.message}
         />
         <TextField
-          label="End Date"
-          fullWidth
-          type="date"
-          {...register("end_date", { required: "End date is required" })}
-          margin="normal"
-          error={!!errors.end_date}
-          helperText={errors.end_date?.message}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
+  label="End Date"
+  fullWidth
+  type="date"
+  {...register("end_date", { required: "End date is required" })}
+  margin="normal"
+  error={!!errors.end_date}
+  helperText={errors.end_date?.message}
+  InputLabelProps={{
+    shrink: true,
+  }}
+  inputProps={{
+    min: new Date().toISOString().split("T")[0], // Sets the minimum date to today
+  }}
+/>
+
        { !editingTaskId &&  
   <Select
     label="Status"

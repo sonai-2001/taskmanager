@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import {
   TextField,
@@ -70,63 +70,103 @@ const Landing: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
   //  handle login code
-  const handleLogin: SubmitHandler<FormInputs> = async ({
-    email,
-    password,
-  }) => {
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const user = session.user;
+        const { data: userData } = await supabase
+          .from("users")
+          .select("role, added_taskable")
+          .eq("id", user.id)
+          .single();
+
+        if (userData) {
+          if (userData.role === "admin") {
+            router.push("/admin");
+          } else if (userData.role === "user") {
+            if (userData.added_taskable) {
+              router.push("/user");
+            } else {
+              router.push("/normaluser");
+            }
+          }
+        }
+      }
+    };
+
+    checkSession();
+  }, [router]);
+  
+  const handleLogin: SubmitHandler<FormInputs> = async ({ email, password }) => {
     const role = isAdmin ? "admin" : "user";
     setErrorMessage("");
     setLoading(true);
-
+  
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
+  
       if (error) throw error;
-       console.log("the data is",data)
-      if (data) {
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id",data.user.id)
-          .single();
-
-        if (userError) throw userError;
-
-        if (userData.role !== role) {
-          toast.error(`No ${role} found.`);
-          reset();
-          router.push("/");
-          return;
-        } else {
-          if (userData.role === "admin") {
-            router.push("/admin");
-          } else {
-            dispatch(addUser(userData));
-            const {data:taskableUser,error:taskableUserError}=await supabase.from("taskusers")
-            .select("*")
-            .eq("id",userData.id)
-           console.log("taskable user",taskableUser)
-            if(taskableUserError){
-                throw taskableUserError
-            }
-            if(taskableUser.length>0){
-              router.push("/user");
-
-            }else{
-              router.push("/normaluser")
-            }
-
-          }
-        }
-        setLoading(false); // Stop loading when user is authenticated
-        toast.success("Login successful!", { position: "top-center" });
-        reset();
+      console.log("🔹 Login Response:", data);
+  
+      if (data.session) {
+        // ✅ Call API to store session in cookies
+        await fetch("/api/auth/store-session", {
+          method: "POST",
+          body: JSON.stringify({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          }),
+          headers: { "Content-Type": "application/json" },
+        });
       }
+  
+      // ✅ Fetch user data from Supabase
+      const user = data.user;
+      if (!user) throw new Error("User not found after login.");
+  
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+  
+      if (userError) throw userError;
+  
+      if (userData.role !== role) {
+        toast.error(`No ${role} found.`);
+        reset();
+        router.push("/");
+        return;
+      }
+  
+      if (userData.role === "admin") {
+        router.push("/admin");
+      } else {
+        dispatch(addUser(userData));
+  
+        const { data: taskableUser, error: taskableUserError } = await supabase
+          .from("taskusers")
+          .select("*")
+          .eq("id", userData.id);
+  
+        if (taskableUserError) throw taskableUserError;
+  
+        if (taskableUser.length > 0) {
+          router.push("/user");
+        } else {
+          router.push("/normaluser");
+        }
+      }
+  
+      setLoading(false);
+      toast.success("Login successful!", { position: "top-center" });
+      reset();
     } catch (error: unknown) {
-      setLoading(false)
+      setLoading(false);
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
@@ -134,6 +174,9 @@ const Landing: React.FC = () => {
       }
     }
   };
+  
+      
+  
  
   // handle register code
   const handleRegister: SubmitHandler<FormInputs> = async ({
@@ -335,6 +378,6 @@ const Landing: React.FC = () => {
       </Grid>
     </ThemeProvider>
   );
-};
+}
 
 export default Landing;

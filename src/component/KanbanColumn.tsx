@@ -2,7 +2,6 @@ import { Grid, Typography } from "@mui/material";
 import { useDrop } from "react-dnd";
 import KanbanCard from "./KanbanCard";
 
-// Define the Task interface
 interface Task {
   id: number;
   task_name: string;
@@ -12,7 +11,6 @@ interface Task {
   project_id: number;
 }
 
-// Define props for the KanbanColumn component
 interface KanbanColumnProps {
   title: string;
   status: string;
@@ -22,7 +20,6 @@ interface KanbanColumnProps {
   handleDelete: (taskId: number) => void;
 }
 
-// React DnD item type constant
 const ITEM_TYPE = "TASK";
 
 const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -31,7 +28,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   tasks,
   onDrop,
   edit,
-  handleDelete
+  handleDelete,
 }) => {
   const [{ isOver }, dropRef] = useDrop({
     accept: ITEM_TYPE,
@@ -43,41 +40,67 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
 
   return (
     <Grid
-  component="div"
-  item
-  xs={12}
-  sm={6}
-  md={4}
-  ref={(node) => {
-    if (node) dropRef(node);
-  }}
-  sx={{
-    backgroundColor: isOver ? "primary.light" : "grey.100",
-    borderRadius: 2,
-    padding: 2,
-    minHeight: "300px",
-  }}
->
-  <Typography variant="h6" color="textPrimary" sx={{ marginBottom: 2, textAlign: "center" }}>
-    {title}
-  </Typography>
+      component="div"
+      item
+      xs={12}
+      sm={6}
+      md={3}
+      ref={(node) => {
+        if (node) dropRef(node);
+      }}
+      sx={{
+        background: isOver
+          ? "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)"
+          : "linear-gradient(135deg, #ece9e6 0%, #ffffff 100%)",
+        borderRadius: 4,
+        padding: 3,
+        marginRight: 2,
+        marginBottom: 2,
+        minHeight: "350px",
+        boxShadow: "0 6px 15px rgba(0, 0, 0, 0.15)",
+        border: "1px solid #ddd",
+        transition: "all 0.3s ease-in-out",
+        "&:hover": {
+          transform: "scale(1.02)",
+          boxShadow: "0 8px 20px rgba(0, 0, 0, 0.2)",
+        },
+      }}
+    >
+      {/* Column Title */}
+      <Typography
+        variant="h6"
+        sx={{
+          marginBottom: 2,
+          textAlign: "center",
+          fontWeight: "bold",
+          color: isOver ? "#fff" : "#333",
+          textTransform: "uppercase",
+          letterSpacing: "0.8px",
+        }}
+      >
+        {title}
+      </Typography>
 
-  {tasks.length > 0 ? (
-    tasks
-      .filter((task) => task.status === status)
-      .map((task) => (
-        <KanbanCard key={task.id} task={task} edit={edit} handleDelete={handleDelete} />
-      ))
-  ) : (
-    <Typography variant="h5" sx={{ textAlign: "center", color: "black" }}>
-      No tasks in this column
-    </Typography>
-  )}
-</Grid>
-
-  
-  
-  
+      {/* Task Cards */}
+      {tasks.length > 0 ? (
+        tasks
+          .filter((task) => task.status === status)
+          .map((task) => (
+            <KanbanCard key={task.id} task={task} edit={edit} handleDelete={handleDelete} />
+          ))
+      ) : (
+        <Typography
+          variant="body1"
+          sx={{
+            textAlign: "center",
+            color: isOver ? "#fff" : "#777",
+            fontStyle: "italic",
+          }}
+        >
+          No tasks in this column
+        </Typography>
+      )}
+    </Grid>
   );
 };
 

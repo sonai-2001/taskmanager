@@ -38,6 +38,12 @@ interface User {
   added_taskable: boolean;
 }
 
+interface admin {
+  id: string;
+  created_at: string;
+  email: string;
+}
+
 // Modal style
 // const modalStyle = {
 //   position: "absolute" as const,
@@ -55,6 +61,10 @@ interface User {
 const AdminPage: React.FC = () => {
   // const [open, setOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+       const [adminUser, setAdminUser] = useState<admin | null>(null);
+     
+    const [activeSection,setActiveSection] = useState("users")
+  
   // const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false); // Loading state for actions
   // const { register, handleSubmit, formState: { errors }, reset } = useForm<FormInputs>();
@@ -88,6 +98,22 @@ const AdminPage: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true); // Start loading while fetching users
     try {
+      const {
+        data: { session },error:sessionError
+      } = await supabase.auth.getSession();
+      if(session?.user){
+        setAdminUser({
+          email:session.user.email || "",
+          id: session.user.id,
+          created_at:session.user.created_at || ""
+        });
+       }else{
+         setAdminUser(null);
+       }
+      if(sessionError){
+        throw sessionError;
+      }
+
       const { data, error } = await supabase
         .from("users")
         .select("id, email, display_name,added_taskable")
@@ -243,197 +269,179 @@ const AdminPage: React.FC = () => {
 
   return (
      
-       <ThemeProvider theme={darkTheme}>
-        <Box
-          sx={{
-            textAlign: "center",
-            bgcolor: "background.default",
-            minHeight: "100vh",
-          }}
-        >
-          <Typography variant="h4" color="text.primary" gutterBottom>
-            Admin Dashboard
-          </Typography>
+    <ThemeProvider theme={darkTheme}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
+      
+      {/* Sidebar Component (Same as User Dashboard) */}
+      <Box
+        sx={{
+          width: 250, // Adjust width as needed
+          bgcolor:"#1d1d1d",
+          color:"#fff" ,
+          p: 3,
+          boxShadow: 3,
+          height: "100vh",
+          
+        }}
+      >
+        <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
+          Admin Panel
+        </Typography>
+  
+        <Button onClick={()=>{
+          setActiveSection("details")
+        }} fullWidth variant="outlined" color="secondary" sx={{ mb: 2 }}>
+          My Details
+        </Button>
+        <Button onClick={()=>{
+          setActiveSection("users")
+        }} fullWidth variant="outlined" color="secondary" sx={{ mb: 2 }}>
+          Manage Users
+        </Button>
+       
+      </Box>
+  
+      {/* Main Content */}
+      
+      {
+        activeSection==="users"?(
+          <Box sx={{ textAlign: "center", width: "100%", p: 3 }}>
+  <Typography variant="h4" fontWeight="bold" color="text.primary" gutterBottom>
+    Admin Dashboard
+  </Typography>
 
-          {/* <Button variant="contained" color="primary" onClick={() => setOpen(true)} sx={{ mb: 3, ml: 5, mr: 2 }}>
-  Add User
-</Button> */}
+  <Button
+    variant="contained"
+    color="secondary"
+    onClick={() => router.back()}
+    sx={{ mb: 3, textTransform: "none", fontWeight: "bold" }}
+  >
+    Back
+  </Button>
 
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={() => router.back()}
-            sx={{ mb: 3 }}
-          >
-            Back
-          </Button>
+  <Box mt={4}>
+    <Typography variant="h6" fontWeight="bold" color="text.primary" mb={2}>
+      All User List
+    </Typography>
 
-          <Box mt={4}>
-            <Typography variant="h6" color="text.primary">
-              All User List
-            </Typography>
-            {errorMessage ? (
-              <Typography
-                variant="body2"
-                color="error"
-                align="center"
-                sx={{ mt: 2 }}
-              >
-                {errorMessage}
-              </Typography>
-            ) : loading ? (
-              <CircularProgress />
-            ) : users.length > 0 ? (
-              <Box display="flex" flexWrap="wrap" justifyContent="center">
-                {users.map((user) => (
-                  <Card
-                    key={user.id}
-                    sx={{
-                      maxWidth: 300,
-                      m: 2,
-                      p: 2,
-                      bgcolor: "background.paper",
-                      borderRadius: 2,
-                      boxShadow: 3,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                    }}
-                  >
-                    <CardHeader
-                      title={
-                        <Typography
-                          variant="h6"
-                          color="text.primary"
-                          textAlign="center"
-                        >
-                          {user.display_name}
-                        </Typography>
-                      }
-                      subheader={
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          textAlign="center"
-                        >
-                          {user.email}
-                        </Typography>
-                      }
-                      sx={{ width: "100%", textAlign: "center" }}
-                    />
-                    <CardContent sx={{ textAlign: "center", width: "100%" }}>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        fullWidth
-                        onClick={() => handleAddUser(user)}
-                        disabled={user.added_taskable}
-                        sx={{
-                          mt: 2,
-                          borderRadius: 2,
-                          bgcolor: user.added_taskable
-                            ? "grey.500"
-                            : "primary.main",
-                          "&:hover": {
-                            bgcolor: user.added_taskable
-                              ? "grey.500"
-                              : "primary.dark",
-                          },
-                          cursor: user.added_taskable
-                            ? "not-allowed"
-                            : "pointer",
-                        }}
-                      >
-                        {user.added_taskable ? "User Added" : "Add User"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
-            ) : (
-              <Typography color="text.secondary">No users found.</Typography>
-            )}
-          </Box>
-          <Typography
-            variant="h6"
+    {errorMessage ? (
+      <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
+        {errorMessage}
+      </Typography>
+    ) : loading ? (
+      <Box display="flex" justifyContent="center" mt={3}>
+        <CircularProgress />
+      </Box>
+    ) : users.length > 0 ? (
+      <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(280px, 1fr))" gap={2}>
+        {users.map((user) => (
+          <Card
+            key={user.id}
             sx={{
-              borderBottom: "2px solid white",
-              width: "100%",
-              my: 2,
+              p: 2,
+              bgcolor: "background.paper",
+              borderRadius: 2,
+              boxShadow: 3,
+              textAlign: "center",
             }}
-          />
-
-          {/* taskable users */}
-          <TaskableUsers />
-
-          {/* Add User Modal */}
-          {/* <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="modal-title">
-            <Box sx={modalStyle}>
-              <Typography id="modal-title" variant="h6" color="text.primary" gutterBottom>
-                Add New User
-              </Typography>
-
-              <form onSubmit={handleSubmit(onSubmit)} noValidate>
-                <TextField
-                  fullWidth
-                  label="Username"
-                  margin="normal"
-                  {...register("display_name", { required: "Username is required." })}
-                  error={!!errors.display_name}
-                  helperText={errors.display_name?.message}
-                  sx={{ mb: 2 }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Email"
-                  margin="normal"
-                  {...register("email", {
-                    required: "Email is required.",
-                    pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                      message: "Enter a valid email address.",
-                    },
-                  })}
-                  error={!!errors.email}
-                  helperText={errors.email?.message}
-                  sx={{ mb: 2 }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Password"
-                  type="password"
-                  margin="normal"
-                  {...register("password", {
-                    required: "Password is required.",
-                    minLength: {
-                      value: 6,
-                      message: "Password must be at least 6 characters long.",
-                    },
-                  })}
-                  error={!!errors.password}
-                  helperText={errors.password?.message}
-                  sx={{ mb: 2 }}
-                />
-
-                <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-                  Add
-                </Button>
-                <Button onClick={() => setOpen(false)} variant="outlined" sx={{ mt: 2, ml: 2 }}>
-                  Cancel
-                </Button>
-              </form>
-
-              {errorMessage && (
-                <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
-                  {errorMessage}
+          >
+            <CardHeader
+              title={
+                <Typography variant="h6" fontWeight="bold" color="text.primary">
+                  {user.display_name}
                 </Typography>
-              )}
+              }
+              subheader={
+                <Typography variant="body2" color="text.secondary">
+                  {user.email}
+                </Typography>
+              }
+              sx={{ pb: 0 }}
+            />
+            <CardContent>
+              <Button
+                variant="contained"
+                color={user.added_taskable ? "success" : "primary"}
+                onClick={() => handleAddUser(user)}
+                disabled={user.added_taskable}
+                sx={{
+                  mt: 2,
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: "bold",
+                  bgcolor: user.added_taskable ? "grey.500" : "primary.main",
+                  "&:hover": {
+                    bgcolor: user.added_taskable ? "grey.500" : "primary.dark",
+                  },
+                  cursor: user.added_taskable ? "not-allowed" : "pointer",
+                }}
+              >
+                {user.added_taskable ? "User Added" : "Add User"}
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </Box>
+    ) : (
+      <Typography color="text.secondary">No users found.</Typography>
+    )}
+  </Box>
+
+  <Typography variant="h6" sx={{ borderBottom: "2px solid white", width: "100%", my: 2 }} />
+
+  <TaskableUsers />
+</Box>
+
+        ):(
+            <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start", // Align content to the left
+              gap: 3,
+              ml: 4, // Added left margin
+            }}
+          >
+            {/* Header */}
+            <Typography
+              variant="h4"
+              sx={{ color:  "#fff" , fontWeight: "bold" }}
+            >
+              My Details
+            </Typography>
+          
+            {/* User Info Card */}
+            <Box
+              sx={{
+                bgcolor:  "#1d1d1d" ,
+                color:  "#fff",
+                padding: 4, // Increased padding
+                borderRadius: 2,
+                boxShadow: 3,
+                width: "100%",
+                maxWidth: 600, // Increased width
+              }}
+            >
+              
+              <Typography variant="h6">Email: {adminUser?.email || "N/A"}</Typography>
+              <Typography variant="h6">
+                Joined:{" "}
+                {new Intl.DateTimeFormat("en-IN", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                }).format(new Date(adminUser?.created_at || "N/A"))}
+              </Typography>
             </Box>
-          </Modal> */}
-        </Box>
-      </ThemeProvider>
+          </Box>
+          
+          
+          )
+      }
+
+    </Box>
+  </ThemeProvider>
+  
   );
 };
 

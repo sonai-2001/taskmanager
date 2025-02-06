@@ -32,32 +32,24 @@ const Header: React.FC = () => {
 
 
 
-const handleSignOut = async () => {
-  try {
-    // Sign out the user from Supabase
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) throw error; // If there's an error in signing out, throw it
-
-    // Clear session storage
-    sessionStorage.removeItem("user");
-
-    // Show success message
-    toast.success("You have been logged out!", { position: "top-center" });
-
-    // Redirect to home page or login page
+  const handleSignOut = async () => {
+    // 1️⃣ Sign out from Supabase
+    await supabase.auth.signOut();
+  
+    // 2️⃣ Clear session cookies on the server
+    await fetch("/api/auth/store-session", {
+      method: "POST",
+      body: JSON.stringify({ access_token: "", refresh_token: "" }),
+      headers: { "Content-Type": "application/json" },
+    });
+  
+    // 3️⃣ Redirect user & show success message
+    toast.success("Logged out successfully!");
     router.push("/");
-
-  } catch (error: unknown) {
-    // Handle error with specific message
-    if (error instanceof Error) {
-      toast.error(`Error logging out: ${error.message}`, { position: "top-center" });
-    } else {
-      toast.error("An unexpected error occurred while logging out!", { position: "top-center" });
-    }
-  }
-};
-
+  };
+  
+  
+  
 
  
  
