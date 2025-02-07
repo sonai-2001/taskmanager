@@ -203,7 +203,7 @@ const UserPage: React.FC = () => {
         marginBottom: 3,
       }}
     >
-     My Projects
+     Menu
     </Typography>
   
     {/* Navigation Buttons */}
